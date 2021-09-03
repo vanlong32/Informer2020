@@ -267,9 +267,9 @@ class Dataset_Custom(Dataset):
         # Nghĩa là bộ dữ liệu chỉ cần có cột date và cột target, chương trình tự đổi thứ tự các cột về chuẩn của nó
         df_raw = df_raw[['date']+cols+[self.target]]
 
-        num_test = 1000
+        num_test = 4000
 
-        num_vali = 5000
+        num_vali = 4000
 
         num_train = int(len(df_raw)) - num_test - num_vali
 

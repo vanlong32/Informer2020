@@ -6,6 +6,12 @@ from utils.tools import EarlyStopping, adjust_learning_rate
 from utils.metrics import metric
 
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
+
+
+import datetime
 
 import torch
 import torch.nn as nn
@@ -19,8 +25,12 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class Exp_Informer(Exp_Basic):
+    
+   
+
     def __init__(self, args):
         super(Exp_Informer, self).__init__(args)
+        
     
     def _build_model(self):
         model_dict = {
@@ -58,6 +68,7 @@ class Exp_Informer(Exp_Basic):
         return model
 
     def _get_data(self, flag):
+       
         args = self.args
 
         data_dict = {
@@ -83,7 +94,7 @@ class Exp_Informer(Exp_Basic):
         data_set = Data(
             root_path=args.root_path,
             data_path=args.data_path,
-            flag=flag,
+            flag= flag,
             size=[args.seq_len, args.label_len, args.pred_len],
             features=args.features,
             target=args.target,
@@ -92,6 +103,12 @@ class Exp_Informer(Exp_Basic):
             freq=freq,
             cols=args.cols
         )
+        #print ('Thông tin về dữ liệu data_set 95/exp_informer.py\n')
+        # chỉ dùng để in dữ liệu lúc train
+        #print(flag, data_set.length())
+        
+        print(flag, len(data_set))
+        
         data_loader = DataLoader(
             data_set,
             batch_size=batch_size,
@@ -133,6 +150,7 @@ class Exp_Informer(Exp_Basic):
         time_now = time.time()
         
         train_steps = len(train_loader)
+        #train_steps = 300
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
         
         model_optim = self._select_optimizer()
@@ -226,7 +244,17 @@ class Exp_Informer(Exp_Basic):
 
         return
 
+    r"""
+    Dùng để chạy dự đoán. Yêu cầu phải có mô hình đã được đào tạo rồi.
+
+    Args:
+        setting (Array): mảng cấu hình  
+        load: có load model đã đào tạo không.     
+    
+    """
     def predict(self, setting, load=False):
+        
+
         pred_data, pred_loader = self._get_data(flag='pred')
         
         if load:
@@ -253,8 +281,95 @@ class Exp_Informer(Exp_Basic):
         
         np.save(folder_path+'real_prediction.npy', preds)
         
+   
+        #print('Ngày dự báo: \n',  pd.Series(pred_data.pred_dates.format()))
+       
+        #print('Kết quả dự đoán: \n', KetQuaDaoNguoc)
+
+
+        
+
+#         plt.title("Dự đoán giá BTC")
+#         plt.xlabel("Giá")
+#         plt.ylabel("Thời gian")
+#         #plt.plot(scaler.inverse_transform(dataset), label='Giá trước dự đoán',color='green')
+#         #plt.plot(trainPredictPlot, label='Giá dự đoán train', color='yellow')
+#         #plt.plot(testPredictPlot, label='Giá dự đoán test', color='red')
+#         #plt.plot(ketQuaGoc, color='blue')
+#         #plt.plot(np.reshape(KetQuaDaoNguoc,(KetQuaDaoNguoc.shape[1],1)))
+#         #plt.plot(dataset, color='orange')
+#         #plt.plot(np.reshape(preds_inver,(preds_inver.shape[1],1)))
+#         #plt.plot(np.reshape(preds,(preds.shape[1],1)), color='orange')
+#         plt.plot_date(pd.Series(pred_data.pred_dates.format()),np.reshape(preds,(preds.shape[1],1)))
+#         plt.show()
+
+
+
+#         dates = pred_data.pred_dates.format()
+#         y = np.arange(len(dates))
+
+#         fig, ax = plt.subplots()
+#         ax.plot_date(dates, np.reshape(preds_inver,(preds_inver.shape[1],1)), 'g')
+#         ax.plot_date(dates, np.reshape(preds,(preds.shape[1],1)), 'g')
+        
+# #        ax.set_xlim(dates[0], dates[-1])
+        
+#         plt.title("Dự đoán giá BTC")
+#         plt.xlabel("Giá")
+#         plt.ylabel("Thời gian")
+#         plt.legend()
+#         plt.show()
+#         print('kết thúc')
+
+
+
+        preds_inver  = np.array(preds)
+        
+        preds_inver = pred_data.scaler.inverse_transform_KetQua(preds_inver)
+
+        #dataframe = pd.read_csv('./ETDataset/ETT-small/BTCscale/Train2/Binance_BTCUSDT_Full_5col_date_open_high_low_close_KetQuaVungTrain.csv', engine='python')
+        dataframe = pd.read_csv('./ETDataset/ETT-small/BTCscale/Train2/test_KetQua.csv', engine='python')
+
+        ketQuaGoc = dataframe.values
+
+        ketQuaGoc = ketQuaGoc[:preds_inver.shape[1],-1]
+
+
+        
+
+        # thu nhro
+        #ti_le = ketQuaGoc[0,0]/preds[0,0,0]
+        #ketQuaGoc = ketQuaGoc/ti_le
+        
+        # thu nhỏ
+        #ti_le = preds_inver[0,0,0]/preds[0,0,0]
+        #preds_inver = preds_inver/ti_le
+
+        
+        #  BỘ TỶ LỆ THEO CSV
+        #ti_le = ketQuaGoc[0]/preds_inver[0,0,0]
+        #preds_inver = preds_inver*ti_le
+        
+
+        # tạo một mảng đúng bằng số lượng phần tử kết quả để làm trục x
+        x = np.arange(preds_inver.shape[1])
+        # plot lines
+        plt.title("Dự đoán giá BTC")
+        plt.xlabel("Giá")
+        plt.ylabel("Thời gian")
+        
+        #plt.plot( x, np.reshape(preds,(preds.shape[1],)), label = "Kết quả gốc")
+        plt.plot( x, np.reshape(preds_inver,(preds_inver.shape[1],)), label = "Kết quả đảo ngược")
+        plt.plot( x, np.reshape(ketQuaGoc,(ketQuaGoc.shape[0],)), label = "Kết quả CSV")
+        plt.legend()
+        plt.show()
+
+
+
         return
 
+    # chỗ này dùng để làm gì?
+    # nó xử lý cái gì đó có vẻ như gốp mấy thông số đầu vào làm một để lưu vào pred.npy và trues.npy 
     def _process_one_batch(self, dataset_object, batch_x, batch_y, batch_x_mark, batch_y_mark):
         batch_x = batch_x.float().to(self.device)
         batch_y = batch_y.float()
@@ -268,6 +383,7 @@ class Exp_Informer(Exp_Basic):
         elif self.args.padding==1:
             dec_inp = torch.ones([batch_y.shape[0], self.args.pred_len, batch_y.shape[-1]]).float()
         dec_inp = torch.cat([batch_y[:,:self.args.label_len,:], dec_inp], dim=1).float().to(self.device)
+        
         # encoder - decoder
         if self.args.use_amp:
             with torch.cuda.amp.autocast():
@@ -280,6 +396,8 @@ class Exp_Informer(Exp_Basic):
                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
             else:
                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+        
+        
         if self.args.inverse:
             outputs = dataset_object.inverse_transform(outputs)
         f_dim = -1 if self.args.features=='MS' else 0

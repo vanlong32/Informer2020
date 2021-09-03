@@ -91,6 +91,7 @@ class InformerStack(nn.Module):
         self.pred_len = out_len
         self.attn = attn
         self.output_attention = output_attention
+        self.e_layers = e_layers
 
         # Encoding
         self.enc_embedding = DataEmbedding(enc_in, d_model, embed, freq, dropout)

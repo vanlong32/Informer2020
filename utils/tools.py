@@ -59,9 +59,11 @@ class StandardScaler():
         self.std = 1.
     
     def fit(self, data):
+        
         self.mean = data.mean(0)
         self.std = data.std(0)
 
+    # thu nhỏ phạm vi dữ liệu về
     def transform(self, data):
         mean = torch.from_numpy(self.mean).type_as(data).to(data.device) if torch.is_tensor(data) else self.mean
         std = torch.from_numpy(self.std).type_as(data).to(data.device) if torch.is_tensor(data) else self.std
@@ -70,4 +72,9 @@ class StandardScaler():
     def inverse_transform(self, data):
         mean = torch.from_numpy(self.mean).type_as(data).to(data.device) if torch.is_tensor(data) else self.mean
         std = torch.from_numpy(self.std).type_as(data).to(data.device) if torch.is_tensor(data) else self.std
+        return (data * std) + mean
+
+    def inverse_transform_KetQua(self, data):
+        mean = self.mean[len(self.mean)-1]
+        std = self.std[len(self.mean)-1]
         return (data * std) + mean
